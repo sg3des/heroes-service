@@ -1,22 +1,22 @@
 .PHONY: all dev clean build env-up env-down run
 
-all: clean build env-up run
 
-dev: build run
 
-##### BUILD
+run: build
+	@echo "Start app ..."
+	@./heroes-service
+
+
 build:
 	@echo "Build ..."
-	@govendor sync
 	@go build
 	@echo "Build done"
 
-##### ENV
+
 env-up:
 	@echo "Start environnement ..."
-	@cd fixtures && docker-compose up --force-recreate -d
+	@cd fixtures && docker-compose up --force-recreate
 	@echo "Sleep 15 seconds in order to let the environment setup correctly"
-	@sleep 15
 	@echo "Environnement up"
 
 env-down:
@@ -24,12 +24,8 @@ env-down:
 	@cd fixtures && docker-compose down
 	@echo "Environnement down"
 
-##### RUN
-run:
-	@echo "Start app ..."
-	@./heroes-service
 
-##### CLEAN
+
 clean: env-down
 	@echo "Clean up ..."
 	@rm -rf /tmp/enroll_user /tmp/msp heroes-service

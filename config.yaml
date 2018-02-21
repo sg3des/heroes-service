@@ -20,7 +20,13 @@ client:
     timeout:
       connection: 3s
       queryResponse: 45s
-      executeTxResponse: 30s
+      executeTxResponse: 60s
+      discovery:
+        # Expiry period for discovery service greylist filter
+        # The channel client will greylist peers that are found to be offline
+        # to prevent re-selecting them in subsequent retries.
+        # This interval will define how long a peer is greylisted
+        greylistExpiry: 5s
   eventService:
     timeout:
       connection: 3s
@@ -72,13 +78,14 @@ channels:
         chaincodeQuery: true
         ledgerQuery: true
         eventSource: true
-      peer1.org1.hf.chainhero.io:
-        endorsingPeer: true
-        chaincodeQuery: true
-        ledgerQuery: true
-        eventSource: true
+      # peer1.org1.hf.chainhero.io:
+      #   endorsingPeer: true
+      #   chaincodeQuery: true
+      #   ledgerQuery: true
+      #   eventSource: true
 
     chaincodes:
+      # - "chainhero:v1"
       # the format follows the "canonical name" of chaincodes by fabric code
 
 
@@ -89,7 +96,7 @@ organizations:
     cryptoPath:  "peerOrganizations/org1.hf.chainhero.io/users/{userName}@org1.hf.chainhero.io/msp"
     peers:
       - peer0.org1.hf.chainhero.io
-      - peer1.org1.hf.chainhero.io
+      # - peer1.org1.hf.chainhero.io
     certificateAuthorities:
       - ca.org1.hf.chainhero.io
 
@@ -100,6 +107,11 @@ orderers:
     grpcOptions:
       ssl-target-name-override: orderer.hf.chainhero.io
       grpc-max-send-message-length: 15
+      keep-alive-time: 0s
+      keep-alive-timeout: 20s
+      keep-alive-permit: false
+      fail-fast: false
+      allow-insecure: false
     tlsCACerts:
       path: "${GOPATH}/src/github.com/chainHero/heroes-service/fixtures/crypto-config/ordererOrganizations/hf.chainhero.io/tlsca/tlsca.hf.chainhero.io-cert.pem"
 
@@ -111,17 +123,27 @@ peers:
     grpcOptions:
       ssl-target-name-override: peer0.org1.hf.chainhero.io
       grpc.http2.keepalive_time: 15
+      keep-alive-time: 0s
+      keep-alive-timeout: 20s
+      keep-alive-permit: false
+      fail-fast: false
+      allow-insecure: false
     tlsCACerts:
       path: "${GOPATH}/src/github.com/chainHero/heroes-service/fixtures/crypto-config/peerOrganizations/org1.hf.chainhero.io/tlsca/tlsca.org1.hf.chainhero.io-cert.pem"
 
-  peer1.org1.hf.chainhero.io:
-    url: grpcs://localhost:8051
-    eventUrl: grpcs://localhost:8053
-    grpcOptions:
-      ssl-target-name-override: peer1.org1.hf.chainhero.io
-      grpc.http2.keepalive_time: 15
-    tlsCACerts:
-      path: "${GOPATH}/src/github.com/chainHero/heroes-service/fixtures/crypto-config/peerOrganizations/org1.hf.chainhero.io/tlsca/tlsca.org1.hf.chainhero.io-cert.pem"
+  # peer1.org1.hf.chainhero.io:
+  #   url: grpcs://localhost:8051
+  #   eventUrl: grpcs://localhost:8053
+  #   grpcOptions:
+  #     ssl-target-name-override: peer1.org1.hf.chainhero.io
+  #     # grpc.http2.keepalive_time: 150
+  #     keep-alive-time: 0s
+  #     keep-alive-timeout: 20s
+  #     keep-alive-permit: false
+  #     fail-fast: true
+  #     allow-insecure: false
+  #   tlsCACerts:
+  #     path: "${GOPATH}/src/github.com/chainHero/heroes-service/fixtures/crypto-config/peerOrganizations/org1.hf.chainhero.io/tlsca/tlsca.org1.hf.chainhero.io-cert.pem"
 
 
 certificateAuthorities:

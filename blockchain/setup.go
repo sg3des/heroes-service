@@ -2,14 +2,14 @@ package blockchain
 
 import (
 	"fmt"
-	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
-	"github.com/hyperledger/fabric-sdk-go/pkg/config"
 	"time"
-	packager "github.com/hyperledger/fabric-sdk-go/pkg/fabric-client/ccpackager/gopackager"
-	resmgmt "github.com/hyperledger/fabric-sdk-go/api/apitxn/resmgmtclient"
-	"github.com/hyperledger/fabric-sdk-go/third_party/github.com/hyperledger/fabric/common/cauthdsl"
-	chmgmt "github.com/hyperledger/fabric-sdk-go/api/apitxn/chmgmtclient"
+
 	"github.com/hyperledger/fabric-sdk-go/api/apitxn/chclient"
+	resmgmt "github.com/hyperledger/fabric-sdk-go/api/apitxn/resmgmtclient"
+	"github.com/hyperledger/fabric-sdk-go/pkg/config"
+	packager "github.com/hyperledger/fabric-sdk-go/pkg/fabric-client/ccpackager/gopackager"
+	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
+	"github.com/hyperledger/fabric-sdk-go/third_party/github.com/hyperledger/fabric/common/cauthdsl"
 )
 
 // FabricSetup implementation
@@ -25,8 +25,8 @@ type FabricSetup struct {
 	OrgAdmin        string
 	OrgName         string
 	client          chclient.ChannelClient
-	admin 			resmgmt.ResourceMgmtClient
-	sdk 			*fabsdk.FabricSDK
+	admin           resmgmt.ResourceMgmtClient
+	sdk             *fabsdk.FabricSDK
 }
 
 // Initialize reads the configuration file and sets up the client, chain and event hub
@@ -47,7 +47,7 @@ func (setup *FabricSetup) Initialize() error {
 
 	// Channel management client is responsible for managing channels (create/update channel)
 	// Supply user that has privileges to create channel (in this case orderer admin)
-	chMgmtClient, err := setup.sdk.NewClient(fabsdk.WithUser(setup.OrgAdmin), fabsdk.WithOrg(setup.OrgName)).ChannelMgmt()
+	chMgmtClient, err := setup.sdk.NewClient(fabsdk.WithUser(setup.OrgAdmin), fabsdk.WithOrg(setup.OrgName)).ResourceMgmt()
 	if err != nil {
 		return fmt.Errorf("failed to add Admin user to sdk: %v", err)
 	}
@@ -60,7 +60,7 @@ func (setup *FabricSetup) Initialize() error {
 	orgAdminUser := session
 
 	// Create channel
-	req := chmgmt.SaveChannelRequest{ChannelID: setup.ChannelID, ChannelConfig: setup.ChannelConfig + "chainhero.channel.tx", SigningIdentity: orgAdminUser}
+	req := resmgmt.SaveChannelRequest{ChannelID: setup.ChannelID, ChannelConfig: setup.ChannelConfig + "chainhero.channel.tx", SigningIdentity: orgAdminUser}
 	if err = chMgmtClient.SaveChannel(req); err != nil {
 		return fmt.Errorf("failed to create channel: %v", err)
 	}
@@ -83,7 +83,6 @@ func (setup *FabricSetup) Initialize() error {
 	return nil
 }
 
-
 func (setup *FabricSetup) InstallAndInstantiateCC() error {
 
 	// Create chaincode package for our chaincode
@@ -93,7 +92,7 @@ func (setup *FabricSetup) InstallAndInstantiateCC() error {
 	}
 
 	// Install our chaincode on org peers
-	installCCReq := resmgmt.InstallCCRequest{Name: setup.ChainCodeID, Path: setup.ChaincodePath, Version: "1.0", Package: ccPkg}
+	installCCReq := resmgmt.InstallCCRequest{Name: setup.ChainCodeID, Path: setup.ChaincodePath, Version: "v1", Package: ccPkg}
 	_, err = setup.admin.InstallCC(installCCReq)
 	if err != nil {
 		return fmt.Errorf("failed to install cc to org peers %v", err)
@@ -103,7 +102,7 @@ func (setup *FabricSetup) InstallAndInstantiateCC() error {
 	ccPolicy := cauthdsl.SignedByAnyMember([]string{"org1.hf.chainhero.io"})
 
 	// Org resource manager will instantiate our chaincode on the channel
-	err = setup.admin.InstantiateCC(setup.ChannelID, resmgmt.InstantiateCCRequest{Name: setup.ChainCodeID, Path: setup.ChaincodePath, Version: "1.0", Args: [][]byte{[]byte("init")}, Policy: ccPolicy})
+	err = setup.admin.InstantiateCC(setup.ChannelID, resmgmt.InstantiateCCRequest{Name: setup.ChainCodeID, Path: setup.ChaincodePath, Version: "v1", Args: [][]byte{[]byte("init")}, Policy: ccPolicy})
 	if err != nil {
 		return fmt.Errorf("failed to instantiate the chaincode: %v", err)
 	}
